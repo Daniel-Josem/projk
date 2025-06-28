@@ -24,7 +24,7 @@ def crear_tarea():
     archivo = request.files['archivo']
     if archivo and archivo.filename != '':
         filename = secure_filename(archivo.filename)
-        ruta_archivo = f"archivos/{filename}"
+        ruta_archivo = f"archivos_tareas/{filename}"
         archivo.save(os.path.join('static', ruta_archivo))
     else:
         ruta_archivo = None
@@ -70,7 +70,7 @@ def editar_tarea():
 
     if archivo and archivo.filename != '':
         filename = secure_filename(archivo.filename)
-        ruta_archivo = f"archivos/{filename}"
+        ruta_archivo = f"archivos_tareas/{filename}"
         archivo.save(os.path.join('static', ruta_archivo))
 
     conn = sqlite3.connect('gestor_de_tareas.db')

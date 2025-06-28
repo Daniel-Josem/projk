@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gestor de Tareas</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-  <link rel="icon" href="{{ url_for('static', filename='avatars/logo.png')}}">
   <link rel="icon" href="{{ url_for('static', filename='avatars/barra_lateral.png')}}">
 
 </head>
@@ -24,7 +23,7 @@
       <p>Una herramienta simple y poderosa para equipos e individuos.</p>
 
       <!-- CORREGIDO -->
-      <button onclick="window.location.href='{{ url_for('login.crear_usuario') }}'">Regístrate</button>
+      <a href="{{ url_for('login.crear_usuario') }}" class="btn">Regístrate</a>
     </div>
     <div class="hero-img">
       <img src="{{ url_for('static', filename='avatars/projekta.jpg') }}" alt="Equipo de trabajo gestor de tareas" />
@@ -54,6 +53,6 @@
     <p>&copy; 2025 Gestor de Tareas. Todos los derechos reservados.</p>
   </footer>
 
-  <script src="main.js"></script>
+  <!-- <script src="main.js"></script> -->
 </body>
 </html>

@@ -4,6 +4,7 @@ from app.login import login_blueprint
 from app.admin import api_blueprint
 from app.lider import lider
 from app.trabajador import trabajador_blueprint
+from app.recuperar import recuperar_bp
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
@@ -13,6 +14,7 @@ app.register_blueprint(login_blueprint)
 app.register_blueprint(api_blueprint)
 app.register_blueprint(lider)
 app.register_blueprint(trabajador_blueprint)
+app.register_blueprint(recuperar_bp)
 
 # Crear tablas y agregar columna 'grupo' si no existe
 def crear_tabla_usuario():

@@ -1,0 +1,111 @@
+/* tarea-modal.css: Estilo más bonito, moderno y profesional para el modal de detalles de tarea */
+
+#modalDetalleTarea .modal-content {
+  border-radius: 1.5rem;
+  box-shadow: 0 16px 48px rgba(40,60,90,0.18);
+  border: none;
+  background: linear-gradient(120deg, #f8fbfa 60%, #eafaf1 100%);
+  padding: 0.5rem 0.5rem 1.5rem 0.5rem;
+  position: relative;
+  overflow: visible;
+  animation: modal-pop 0.55s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes modal-pop {
+  0% { transform: scale(0.95) translateY(40px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+#modalDetalleTarea .modal-header {
+  background: linear-gradient(90deg, #eafaf1 0%, #d6f5e3 100%);
+  border-bottom: none;
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  box-shadow: 0 2px 12px rgba(33,140,90,0.07);
+  padding-bottom: 0.7rem;
+}
+
+#modalDetalleTarea .modal-title {
+  font-weight: 900;
+  font-size: 1.28rem;
+  color: #1b5e4a;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#modalDetalleTarea .modal-body {
+  padding-top: 1.3rem;
+  padding-bottom: 1.3rem;
+}
+
+#modalDetalleTarea .btn {
+  border-radius: 0.9rem;
+  font-weight: 600;
+  background: #f4f8f6;
+  color: #1b5e4a;
+  border: 1.5px solid #d6f5e3;
+  transition: background 0.22s, color 0.22s, box-shadow 0.22s;
+  box-shadow: 0 1px 4px rgba(33,140,90,0.06);
+}
+#modalDetalleTarea .btn:hover {
+  background: #43e97b;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(33,140,90,0.13);
+  border-color: #38f9d7;
+}
+
+#modalDetalleTarea .btn-outline-success {
+  border-width: 1.5px;
+  color: #1b5e4a;
+  background: #fff;
+}
+#modalDetalleTarea .btn-outline-success:hover {
+  background: #38f9d7;
+  color: #fff;
+  border-color: #43e97b;
+}
+
+#modalDetalleTarea .form-control {
+  border-radius: 0.7rem;
+  border: 1.5px solid #d6f5e3;
+  background: #f7faf9;
+}
+
+#modalDetalleTarea .list-group-item {
+  background: transparent;
+  font-size: 1.05rem;
+  border: none;
+  color: #2d3a3a;
+}
+
+#modalDetalleTarea .estado-badge {
+  font-size: 1.05rem;
+  padding: 0.42em 1.1em;
+  border-radius: 1.2em;
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(33,140,90,0.10);
+  border: none;
+}
+
+#modalDetalleTarea .btn-close {
+  filter: none;
+}
+
+/* Animación de apertura fade + pop */
+#modalDetalleTarea .modal-dialog {
+  transition: all 0.45s cubic-bezier(0.4,0,0.2,1);
+}
+
+@media (max-width: 576px) {
+  #modalDetalleTarea .modal-content {
+    border-radius: 1rem;
+    padding: 0.2rem 0.2rem 1rem 0.2rem;
+  }
+  #modalDetalleTarea .modal-title {
+    font-size: 1.05rem;
+  }
+}

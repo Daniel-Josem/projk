@@ -39,6 +39,18 @@ def crear_tabla_usuario():
     if 'grupo' not in columnas:
         cursor.execute('ALTER TABLE Usuario ADD COLUMN grupo TEXT')
         print("Columna 'grupo' agregada a la tabla Usuario.")
+        
+    if 'proyecto' not in columnas:
+        cursor.execute('ALTER TABLE Usuario ADD COLUMN proyecto TEXT')
+        print("Columna 'proyecto' agregada a la tabla Usuario.")
+
+    if 'telefono' not in columnas:
+        cursor.execute('ALTER TABLE Usuario ADD COLUMN telefono TEXT')
+        print("Columna 'telefono' agregada a la tabla Usuario.")
+    
+    if 'direccion' not in columnas:
+        cursor.execute('ALTER TABLE Usuario ADD COLUMN direccion TEXT')
+        print("Columna 'direccion' agregada a la tabla Usuario.")
 
     # Crear tabla lider
     cursor.execute('''

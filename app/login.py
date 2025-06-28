@@ -137,21 +137,20 @@ def crear_usuario():
         documento = request.form['documento']
         correo = request.form['correo']
         contrasena = request.form['contrasena']
-        grupo = request.form['grupo']
+        # El grupo se asigna después del registro, no durante el proceso de creación
 
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
             cursor.execute('''
-                INSERT INTO Usuario (nombre_completo, nombre_usuario, documento, correo, contraseña, grupo)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO Usuario (nombre_completo, nombre_usuario, documento, correo, contraseña)
+                VALUES (?, ?, ?, ?, ?)
             ''', (
                 nombre,
                 nombre_usuario,
                 documento,
                 correo,
-                generate_password_hash(contrasena),  # Encriptación
-                grupo
+                generate_password_hash(contrasena)  # Encriptación
             ))
             conn.commit()
             flash('Usuario creado exitosamente.')

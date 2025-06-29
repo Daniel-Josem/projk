@@ -111,10 +111,16 @@ def login():
         cursor.execute('SELECT * FROM Usuario WHERE nombre_usuario = ?', (nombre_usuario,))
         usuario = cursor.fetchone()
         conn.close()
-
-        if usuario and check_password_hash(usuario['contraseña'], contrasena):
+       # Verifica si el usuario existe o esta inactivo y si la contraseña es correcta (Majo)
+        if usuario is None:
+            flash('El usuario es incorrecto.')
+        elif usuario['estado'] != 'activo':
+            flash('El usuario está inactivo. Contacta al administrador.')
+        elif not check_password_hash(usuario['contraseña'], contrasena):
+            flash('Contraseña incorrecta.')
+        else:
             session['usuario'] = nombre_usuario
-            session['grupo'] = usuario['grupo']  # ✅ Guardar el grupo en la sesión
+            session['grupo'] = usuario['grupo'] # ✅ Guardar el grupo en la sesión
             rol = usuario['rol']
 
             if rol == 'admin':
@@ -123,10 +129,9 @@ def login():
                 return redirect(url_for('lider.lideres'))
             else:
                 return redirect(url_for('trabajador.trabajador'))
-        else:
-            flash('Usuario o contraseña incorrectos.')
 
     return render_template('login.html')
+
 
 # Ruta del registro
 @login_blueprint.route('/crear_usuario', methods=['GET', 'POST'])

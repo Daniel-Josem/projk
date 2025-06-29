@@ -9,6 +9,7 @@
   <!-- Tus estilos -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='avatars/barra_lateral.png')}}">
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 <body>
@@ -60,5 +61,18 @@
       </p>
     </form>
   </div>
+      <!--(MAJO)Mostrar alertas si hay mensajes --> 
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <script>
+        Swal.fire({
+          icon: 'warning',
+          title: '¡Atención!',
+          text: '{{ messages[0] }}',
+          confirmButtonColor: '#d33'
+        });
+      </script>
+    {% endif %}
+  {% endwith %}
 </body>
 </html>

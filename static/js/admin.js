@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const dashboardLink = document.getElementById('dashboard-link');
   const profesoresLink = document.getElementById('profesores-link');
   const registroLink = document.getElementById('registro-profesor-link');
+  const trabajadoresLink = document.getElementById('trabajadores-link');
 
   document.getElementById('proyectos-count').textContent = '5';
 
@@ -223,6 +224,14 @@ function cargarEventosLideres() {
           // ✅ Borrar visualmente la fila
           const fila = document.getElementById(`fila-lider-${id}`);
           if (fila) fila.remove();  // ✅ Esto mantiene el registro en la BD pero lo quita visualmente
+         
+          // ✅ Actualizar contador de líderes tras inactivación
+          fetch('/api/lider/count')
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('lideres-count').textContent = data.count;
+  });
+
         })
         .catch(err => console.error("Error al inactivar líder:", err));
     });
@@ -288,4 +297,125 @@ function cargarEventosLideres() {
       mainContent.innerHTML = '';
     });
   }
+  if (trabajadoresLink) {
+  trabajadoresLink.addEventListener('click', function (e) {
+    e.preventDefault();
+    ocultarSecciones();
+
+    fetch('/api/trabajadores')
+      .then(res => res.json())
+      .then(trabajadores => {
+        let tablaHTML = `
+          <h3 class="mb-4">Lista de Trabajadores</h3>
+          <table class="table table-bordered table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Usuario</th>
+                <th>Documento</th>
+                <th>Correo</th>
+                <th>Grupo</th>
+                <th>Proyecto</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+        trabajadores.forEach(t => {
+          tablaHTML += `
+            <tr id="fila-trabajador-${t.id}">
+              <td>${t.id}</td>
+              <td><span class="nombre-trabajador-clickable" data-id="${t.id}">${t.nombre_completo}</span></td>
+              <td>${t.nombre_usuario}</td>
+              <td>${t.documento}</td>
+              <td>${t.correo}</td>
+              <td>${t.grupo}</td>
+              <td>${t.proyecto || ''}</td>
+              <td><span class="badge ${t.estado === 'activo' ? 'bg-success' : 'bg-secondary'}">${t.estado}</span></td>
+              <td>
+                ${t.estado === 'activo'
+                  ? `<button class="btn btn-danger btn-sm inactivar-trabajador" data-id="${t.id}">Inactivar</button>`
+                  : `<button class="btn btn-secondary btn-sm" disabled>Inactivado</button>`}
+              </td>
+            </tr>`;
+        });
+
+        tablaHTML += `</tbody></table>`;
+        mainContent.innerHTML = tablaHTML;
+        cargarEventosTrabajadores();
+      });
+  });
+}
+function cargarEventosTrabajadores() {
+  document.querySelectorAll('.inactivar-trabajador').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const id = this.dataset.id;
+
+      fetch(`/api/trabajador/inactivar/${id}`, {
+        method: 'POST'
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert("🚫 " + data.message);
+          const fila = document.getElementById(`fila-trabajador-${id}`);
+          if (fila) fila.remove();
+        })
+        .catch(err => console.error("Error al inactivar trabajador:", err));
+    });
+  });
+
+  document.querySelectorAll('.nombre-trabajador-clickable').forEach(span => {
+    span.addEventListener('click', function () {
+      const id = this.dataset.id;
+
+      fetch(`/api/trabajador/${id}`)
+        .then(res => res.json())
+        .then(t => {
+          mainContent.innerHTML = `
+            <div class="container mt-4">
+              <h3>Editar Trabajador</h3>
+              <form id="formEditarTrabajador">
+                <input type="hidden" name="id" value="${t.id}">
+                <div class="row g-3">
+                  <div class="col-md-6"><label class="form-label">Nombre Completo</label><input type="text" name="nombre_completo" class="form-control" value="${t.nombre_completo}" required></div>
+                  <div class="col-md-6"><label class="form-label">Usuario</label><input type="text" name="nombre_usuario" class="form-control" value="${t.nombre_usuario}" required></div>
+                  <div class="col-md-6"><label class="form-label">Documento</label><input type="text" name="documento" class="form-control" value="${t.documento}" required></div>
+                  <div class="col-md-6"><label class="form-label">Grupo</label><input type="text" name="grupo" class="form-control" value="${t.grupo || ''}"></div>
+                  <div class="col-md-6"><label class="form-label">Proyecto</label><input type="text" name="proyecto" class="form-control" value="${t.proyecto || ''}"></div>
+                  <div class="col-md-6"><label class="form-label">Correo</label><input type="email" name="correo" class="form-control" value="${t.correo}" required></div>
+                </div>
+                <div class="mt-3"><button type="submit" class="btn btn-primary">Guardar Cambios</button></div>
+              </form>
+            </div>
+          `;
+
+          const formEditar = document.getElementById('formEditarTrabajador');
+          formEditar.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const datos = Object.fromEntries(formData.entries());
+
+            fetch('/api/trabajador/actualizar', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(datos)
+            })
+              .then(res => res.json())
+              .then(response => {
+                alert("✅ " + response.message);
+                trabajadoresLink.click(); // recargar lista
+              })
+              .catch(error => {
+                alert("❌ Error al actualizar trabajador");
+                console.error(error);
+              });
+          });
+        });
+    });
+  });
+
+}
+
 });

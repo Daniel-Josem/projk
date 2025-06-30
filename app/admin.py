@@ -1,5 +1,9 @@
-from flask import Blueprint, jsonify, request,render_template
+from flask import Blueprint, jsonify, request,render_template,send_file
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
+from fpdf import FPDF
+from unidecode import unidecode
+from datetime import datetime
 import sqlite3
 import os
 
@@ -217,9 +221,212 @@ def actualizar_trabajador():
                 documento = ?,
                 correo = ?,
                 grupo = ?,
-                proyecto = ?
+                proyecto = ?,
+                telefono = ?,
+                direccion = ?
             WHERE id = ? AND rol = 'trabajador'
         ''', (*valores, id))
         conn.commit()
 
     return jsonify({"message": "Trabajador actualizado correctamente"})
+
+# 10.  Ruta para actualizar el perfil del administrador
+@api_blueprint.route('/perfil/actualizar', methods=['POST'])
+def actualizar_perfil():
+    nombre = request.form.get('nombre')
+    descripcion = request.form.get('descripcion')
+    imagen = request.files.get('imagen')
+
+    ruta_final = None
+    if imagen:
+        nombre_archivo = secure_filename(imagen.filename)
+        ruta = os.path.join('static/avatars', nombre_archivo)
+        imagen.save(ruta)
+        ruta_final = f'/static/avatars/{nombre_archivo}'
+
+    # Aquí puedes agregar la lógica para actualizar en la base de datos si es necesario
+
+    return jsonify({
+        'nombre': nombre,
+        'descripcion': descripcion,
+        'imagen': ruta_final
+    })
+
+@api_blueprint.route('/api/proyecto/<nombre_proyecto>')
+def info_proyecto(nombre_proyecto):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Líder asignado al proyecto
+    cursor.execute("""
+        SELECT nombre_completo FROM Usuario
+        WHERE rol = 'lider' AND proyecto = ?
+    """, (nombre_proyecto,))
+    lider = cursor.fetchone()
+
+    # Total de tareas del proyecto
+    cursor.execute("SELECT COUNT(*) FROM tareas WHERE id_proyecto = ?", (nombre_proyecto,))
+    total_tareas = cursor.fetchone()[0]
+
+    # Tareas enviadas (completadas)
+    cursor.execute("SELECT COUNT(*) FROM tareas WHERE id_proyecto = ? AND estado = 'enviada'", (nombre_proyecto,))
+    tareas_completadas = cursor.fetchone()[0]
+
+    # Trabajadores con tareas pendientes
+    cursor.execute("""
+        SELECT DISTINCT U.nombre_completo
+        FROM tareas T
+        JOIN Usuario U ON T.id_usuario_asignado = U.id
+        WHERE T.id_proyecto = ? AND T.estado = 'pendiente' AND U.rol = 'trabajador'
+    """, (nombre_proyecto,))
+    trabajadores_pendientes = [fila[0] for fila in cursor.fetchall()]
+
+    conn.close()
+
+    return jsonify({
+        'lider': lider['nombre_completo'] if lider else 'No asignado',
+        'total': total_tareas,
+        'completadas': tareas_completadas,
+        'pendientes': total_tareas - tareas_completadas,
+        'trabajadores': trabajadores_pendientes
+    })
+
+class PDF(FPDF):
+    def set_project_name(self, nombre):
+        self.project_name = unidecode(nombre)
+
+    def header(self):
+        self.set_font('Arial', 'B', 14)
+        self.cell(0, 10, f"Informe del proyecto: {self.project_name}", 0, 1, 'C')
+        self.ln(5)
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+
+    def title_section(self, lider_nombre, fecha):
+        self.set_font('Arial', '', 12)
+        self.cell(0, 10, f"Líder del proyecto: {unidecode(lider_nombre)}", 0, 1)
+        self.cell(0, 10, f"Fecha de generación: {fecha}", 0, 1)
+        self.ln(5)
+
+    def table_section(self, tareas):
+        self.set_font('Arial', 'B', 12)
+        self.cell(60, 10, 'Tarea', 1)
+        self.cell(40, 10, 'Fecha vencimiento', 1)
+        self.cell(40, 10, 'Fecha registro', 1)
+        self.cell(50, 10, 'Asignado a', 1)
+        self.ln()
+
+        self.set_font('Arial', '', 11)
+        for tarea in tareas:
+            self.cell(60, 10, unidecode(tarea['titulo'].replace("–", "-"))[:30], 1)
+            self.cell(40, 10, tarea['fecha_vencimiento'], 1)
+            self.cell(40, 10, tarea['fecha_registro'], 1)
+            self.cell(50, 10, unidecode(tarea['nombre_completo'].replace("–", "-"))[:30], 1)
+            self.ln()
+
+    def no_tasks_message(self):
+        self.set_font('Arial', 'I', 12)
+        self.cell(0, 10, "No hay tareas pendientes en este proyecto.", 0, 1)
+
+@api_blueprint.route('/api/proyecto/<nombre_proyecto>/pdf')
+def generar_pdf_proyecto(nombre_proyecto):
+    conn = sqlite3.connect('gestor_de_tareas.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Obtener ID del proyecto desde su nombre
+    cursor.execute("SELECT id FROM proyectos WHERE nombre = ?", (nombre_proyecto,))
+    proyecto = cursor.fetchone()
+    if not proyecto:
+        return jsonify({"error": "Proyecto no encontrado"}), 404
+
+    id_proyecto = proyecto['id']
+
+    # Buscar líder del proyecto
+    cursor.execute("SELECT nombre_completo FROM Usuario WHERE proyecto = ? AND rol = 'lider'", (nombre_proyecto,))
+    lider = cursor.fetchone()
+    lider_nombre = lider['nombre_completo'] if lider else 'No asignado'
+
+    # Tareas pendientes del proyecto usando ID
+    cursor.execute('''
+        SELECT T.titulo, T.fecha_vencimiento, T.fecha_registro, U.nombre_completo
+        FROM tareas T
+        JOIN Usuario U ON T.id_usuario_asignado = U.id
+        WHERE T.id_proyecto = ? AND T.estado = 'pendiente'
+    ''', (id_proyecto,))
+    tareas_pendientes = cursor.fetchall()
+    conn.close()
+
+    # Crear PDF
+    pdf = PDF()
+    pdf.alias_nb_pages()
+    pdf.set_project_name(nombre_proyecto)
+    pdf.add_page()
+    fecha_actual = datetime.now().strftime('%d/%m/%Y')
+    pdf.title_section(lider_nombre, fecha_actual)
+
+    if tareas_pendientes:
+        pdf.table_section(tareas_pendientes)
+    else:
+        pdf.no_tasks_message()
+
+    # Guardar archivo
+    nombre_archivo = f"informe_{nombre_proyecto.replace(' ', '_')}.pdf"
+    ruta_pdf = os.path.join('static', nombre_archivo)
+    
+    try:
+        pdf.output(ruta_pdf)
+    except UnicodeEncodeError as e:
+        print("❌ Error al guardar PDF por caracteres no compatibles:", e)
+        return jsonify({"error": "No se pudo generar el PDF por caracteres especiales."}), 500
+
+    return send_file(ruta_pdf, as_attachment=True)
+
+@api_blueprint.route('/api/proyecto/<nombre_proyecto>')
+def obtener_avance_proyecto(nombre_proyecto):
+    conn = sqlite3.connect('gestor_de_tareas.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM proyectos WHERE nombre = ?", (nombre_proyecto,))
+    proyecto = cursor.fetchone()
+
+    if not proyecto:
+        return jsonify({'error': 'Proyecto no encontrado'}), 404
+
+    id_proyecto = proyecto['id']
+
+    cursor.execute("SELECT COUNT(*) FROM tareas WHERE id_proyecto = ?", (id_proyecto,))
+    total = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM tareas WHERE id_proyecto = ? AND estado = 'completada'", (id_proyecto,))
+    completadas = cursor.fetchone()[0]
+
+    # Obtener líder asignado
+    cursor.execute("SELECT nombre_completo FROM Usuario WHERE proyecto = ? AND rol = 'lider'", (nombre_proyecto,))
+    lider = cursor.fetchone()
+    lider_nombre = lider['nombre_completo'] if lider else "No asignado"
+
+    # Obtener trabajadores con tareas pendientes
+    cursor.execute('''
+        SELECT DISTINCT U.nombre_completo
+        FROM tareas T
+        JOIN Usuario U ON T.id_usuario_asignado = U.id
+        WHERE T.id_proyecto = ? AND T.estado = 'pendiente'
+    ''', (id_proyecto,))
+    trabajadores = [fila['nombre_completo'] for fila in cursor.fetchall()]
+
+    conn.close()
+
+    avance = round((completadas / total) * 100, 2) if total > 0 else 0
+
+    return jsonify({
+        'avance': avance,
+        'total': total,
+        'completadas': completadas,
+        'lider': lider_nombre,
+        'trabajadores': trabajadores
+    })

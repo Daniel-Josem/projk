@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const profesoresLink = document.getElementById('profesores-link');
   const registroLink = document.getElementById('registro-profesor-link');
   const trabajadoresLink = document.getElementById('trabajadores-link');
+  const materiaLinks = document.querySelectorAll('.materia-link');
+  
 
   document.getElementById('proyectos-count').textContent = '5';
 
@@ -369,7 +371,6 @@ function cargarEventosTrabajadores() {
   document.querySelectorAll('.nombre-trabajador-clickable').forEach(span => {
     span.addEventListener('click', function () {
       const id = this.dataset.id;
-
       fetch(`/api/trabajador/${id}`)
         .then(res => res.json())
         .then(t => {
@@ -417,5 +418,158 @@ function cargarEventosTrabajadores() {
   });
 
 }
+document.getElementById('imagenPerfilInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      document.getElementById('previewImagenPerfil').src = event.target.result;
+      document.querySelector('.user-pill img').src = event.target.result; // Actualiza imagen en el header
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+document.getElementById('formPerfil').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const formData = new FormData(form);
+
+  fetch('/perfil/actualizar', {
+    method: 'POST',
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.imagen) {
+        // Cambiar imagen del menú superior inmediatamente
+        const avatar = document.querySelector('.user-pill img');
+        avatar.src = data.imagen + '?t=' + new Date().getTime(); // Cache busting
+
+        // También cambiar en el modal
+        document.getElementById('previewImagenPerfil').src = data.imagen + '?t=' + new Date().getTime();
+      }
+
+      // Cambiar nombre
+      if (data.nombre) {
+        document.querySelector('.user-name').textContent = data.nombre;
+      }
+
+      // Cerrar modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('perfilModal'));
+      modal.hide();
+    })
+    .catch(err => {
+      alert('Error al actualizar perfil');
+      console.error(err);
+    });
+});
+
+if (materiaLinks.length > 0) {
+  materiaLinks.forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      ocultarSecciones();
+
+      const nombreProyecto = this.textContent.trim();
+
+      fetch(`/api/proyecto/${encodeURIComponent(nombreProyecto)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            mainContent.innerHTML = `<div class="alert alert-danger">Proyecto no encontrado.</div>`;
+            return;
+          }
+
+          const avance = typeof data.avance === 'number' && !isNaN(data.avance) ? data.avance : 0;
+          const pendientes = 100 - avance;
+
+
+          let trabajadoresHTML = '';
+          if (data.trabajadores && data.trabajadores.length > 0) {
+            trabajadoresHTML = data.trabajadores.map(t => `<li class="list-group-item">${t}</li>`).join('');
+          } else {
+            trabajadoresHTML = '<li class="list-group-item">No hay trabajadores con tareas pendientes.</li>';
+          }
+
+          mainContent.innerHTML = `
+            <h3 class="mb-4">Informe del Proyecto: <strong>${nombreProyecto}</strong></h3>
+
+            <p><strong>Líder del Proyecto:</strong> ${data.lider}</p>
+
+            <div class="progress mb-4" style="height: 30px;">
+              <div class="progress-bar bg-success" role="progressbar" style="width: ${avance}%">
+                ${avance}% Completadas
+              </div>
+              <div class="progress-bar bg-warning text-dark" role="progressbar" style="width: ${pendientes}%">
+                ${pendientes}% Pendientes
+              </div>
+            </div>
+
+            <h5>Trabajadores con tareas pendientes</h5>
+            <ul class="list-group mb-4">${trabajadoresHTML}</ul>
+
+            <button class="btn btn-outline-danger" id="btnGenerarPDF">
+              <i class="bi bi-file-earmark-pdf"></i> Generar Informe PDF
+            </button>
+          `;
+
+          const btnPDF = document.getElementById('btnGenerarPDF');
+          if (btnPDF) {
+            btnPDF.addEventListener('click', () => {
+              fetch(`/api/proyecto/${encodeURIComponent(nombreProyecto)}/pdf`)
+                .then(resp => resp.blob())
+                .then(blob => {
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `informe_${nombreProyecto.replace(/\s+/g, '_')}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                });
+            });
+          }
+        })
+        .catch(error => {
+          console.error("Error al cargar el proyecto:", error);
+          mainContent.innerHTML = `<div class="alert alert-danger text-center">No se pudo cargar el proyecto seleccionado.</div>`;
+        });
+    });
+  });
+}
+
+function cargarAvanceProyecto(nombreProyecto) {
+  fetch(`/api/proyecto/${encodeURIComponent(nombreProyecto)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        console.error(data.error);
+        return;
+      }
+
+      const avance = data.avance;
+      const barra = document.querySelector(`#barra-${nombreProyecto.replace(/\s+/g, '-')}`);
+
+      if (barra) {
+        barra.style.width = `${avance}%`;
+        barra.innerText = `${avance}%`;
+      }
+    });
+}
+const proyectoHTML = `
+  <div class="card">
+    <h3>${proyecto.nombre}</h3>
+    <div class="progress">
+      <div class="progress-bar bg-success" 
+           id="barra-${proyecto.nombre.replace(/\s+/g, '-')}" 
+           style="width: 0%">0%</div>
+    </div>
+    <button onclick="cargarAvanceProyecto('${proyecto.nombre}')">Actualizar Avance</button>
+  </div>
+`;
+
 
 });

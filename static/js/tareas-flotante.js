@@ -79,25 +79,7 @@ function mostrarOverlayTareas() {
   overlayTareas = document.getElementById('overlayMisTareas');
   overlayTareas.style.display = 'flex';
   document.body.classList.add('no-scroll');
-  // Recargar tareas desde el backend antes de mostrar
-  fetch('/api/tareas')
-    .then(resp => resp.json())
-    .then(data => {
-      if (Array.isArray(data)) {
-        // Actualizar el array global de tareas
-        window.tareasUsuario = data;
-        // Si la variable tareas es un const, no se puede reasignar, pero sí actualizar su contenido si es let/var
-        if (typeof tareas !== 'undefined' && Array.isArray(tareas)) {
-          tareas.length = 0;
-          data.forEach(t => tareas.push(t));
-        }
-      }
-      mostrarTarjetasTareasOverlay();
-    })
-    .catch(() => {
-      // Si falla, mostrar las tareas actuales
-      mostrarTarjetasTareasOverlay();
-    });
+  mostrarTarjetasTareasOverlay();
 }
 
 function cerrarOverlayTareas() {
@@ -119,19 +101,6 @@ function mostrarTarjetasTareasOverlay() {
     col.className = 'col-12 col-md-6 col-lg-4';
     const card = document.createElement('div');
     card.className = 'tarea-tarjeta tarea-tarjeta-overlay';
-    // Mostrar solo el archivo más reciente si hay varios
-    let archivoHtml = '';
-    if (tarea.archivos && tarea.archivos.length > 0) {
-      const archivo = tarea.archivos[tarea.archivos.length - 1];
-      archivoHtml = `
-        <div class="tarea-archivo-overlay mt-2">
-          <i class="bi bi-paperclip text-info"></i>
-          <a href="${archivo.url}" class="ms-1 link-success fw-semibold text-truncate tarea-archivo-link" target="_blank" style="max-width: 140px; display: inline-block; vertical-align: middle;">
-            <i class="bi bi-file-earmark-arrow-down me-1"></i>${archivo.nombre.length > 18 ? archivo.nombre.slice(0, 15) + '...' : archivo.nombre}
-          </a>
-        </div>
-      `;
-    }
     card.innerHTML = `
       <div class="tarea-titulo">${tarea.titulo}</div>
       <div class="tarea-prioridad">
@@ -141,7 +110,6 @@ function mostrarTarjetasTareasOverlay() {
       <div class="icono-estado">
         ${tarea.estado === 'completado' ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-hourglass-split text-warning"></i>'}
       </div>
-      ${archivoHtml}
     `;
     // Mostrar detalles de la tarea en un panel flotante a la derecha del overlay
     card.onclick = (e) => {
@@ -237,25 +205,8 @@ function mostrarPanelDetalleTareaOverlay(id) {
           });
           const data = await resp.json();
           if (data.ok) {
-            // Marcar como completada automáticamente
-            await fetch(`/api/tarea/completar/${tarea.id}`, {
-              method: 'POST',
-              headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            // Volver a cargar los detalles de la tarea para reflejar el archivo subido
-            // Y actualizar la lista de tarjetas y resumen
             mostrarPanelDetalleTareaOverlay(tarea.id);
-            // Actualizar tarjetas y resumen
-            fetch('/api/tareas')
-              .then(resp => resp.json())
-              .then(data => {
-                if (Array.isArray(data)) {
-                  window.tareasUsuario = data;
-                  if (typeof mostrarTarjetasTareasOverlay === 'function') mostrarTarjetasTareasOverlay();
-                  if (typeof mostrarTarjetasTareas === 'function') mostrarTarjetasTareas();
-                }
-              });
-            alert('Archivo subido y tarea marcada como completada.');
+            alert('Archivo subido correctamente.');
           } else {
             alert('Error al subir archivo: ' + (data.msg || ''));
           }

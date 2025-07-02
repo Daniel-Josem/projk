@@ -33,17 +33,11 @@
                     </a>
                 </li>
                 <li class="nav-item mb-2">
-                    <a href="#cursosSubmenu" data-bs-toggle="collapse" class="nav-link text-white dropdown-toggle">
-                        <i class="bi bi-people me-2"></i> <span>Grupos</span>
-                    </a>
-                    <ul class="collapse list-unstyled ps-3" id="cursosSubmenu">
-                        <li><a href="#" class="nav-link text-white curso-link-sidebar">Grupo 1</a></li>
-                        <li><a href="#" class="nav-link text-white curso-link-sidebar">Grupo 2</a></li>
-                        <li><a href="#" class="nav-link text-white curso-link-sidebar">Grupo 3</a></li>
-                        <li><a href="#" class="nav-link text-white curso-link-sidebar">Grupo 4</a></li>
-                        <li><a href="#" class="nav-link text-white curso-link-sidebar">Grupo 5</a></li>
-                    </ul>
-                </li>
+    <a href="#" class="nav-link text-white curso-link-sidebar">
+        <i class="bi bi-people me-2"></i> <span>Mi Grupo</span>
+    </a>
+</li>
+
             </ul>
         </nav>
 
@@ -57,8 +51,10 @@
                                 Notificaciones
                                 <span class="badge bg-danger ms-1" id="notificaciones-count">0</span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end p-2 shadow-sm" aria-labelledby="navbarDropdownNotificaciones" id="notificaciones-lista" style="min-width: 320px; max-height: 350px; overflow-y: auto; box-shadow: 0 8px 32px rgba(25,135,84,0.18); border-radius: 1.1rem;">
-                                <li class="text-muted small">🔔 No hay notificaciones nuevas</li>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownNotificaciones" id="notificaciones-lista">
+                                <li><a class="dropdown-item text-center text-muted" href="#">No hay notificaciones</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-primary text-center" href="#" id="marcarTodasLeidas">Marcar todas como leídas</a></li>
                             </ul>
                         </li>
                         <li class="nav-item user-dropdown-wrapper d-flex justify-content-end align-items-center">
@@ -68,10 +64,11 @@
                                     <span class="user-name fw-bold">Nombre Del lider</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                    <li><a class="dropdown-item" href="#" id="btnEditarPerfil">Editar perfil</a></li>
+                                    <li><a class="dropdown-item" href="#" id="btnEditarPerfil">Perfil</a></li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li><a class="dropdown-item text-danger" href="{{ url_for('login.login') }}">Cerrar sesión</a></li>
                                 </ul>
+
                             </div>
                         </li>
                     </ul>
@@ -303,47 +300,58 @@
             </div>
 
             <!-- Modal Perfil -->
-            <div class="modal fade" id="modalPerfilProfesor" tabindex="-1" aria-labelledby="modalPerfilProfesorLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <form id="formPerfilProfesor" class="modal-content">
-                        <input type="hidden" name="id" id="profesorId">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalPerfilProfesorLabel">Editar Perfil</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="nombrePerfil" class="form-label">Nombre</label>
-                                <input type="text" class="form-control" id="nombrePerfil" name="nombre" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="emailPerfil" class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="emailPerfil" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="nuevaContrasenaPerfil" class="form-label">Nueva Contraseña (dejar vacío si no quieres cambiar)</label>
-                                <input type="password" class="form-control" id="nuevaContrasenaPerfil" name="nueva_contrasena">
-                            </div>
-                            <div class="mb-3">
-                                <label for="confirmarContrasenaPerfil" class="form-label">Confirmar Nueva Contraseña</label>
-                                <input type="password" class="form-control" id="confirmarContrasenaPerfil" name="confirmar_contrasena">
-                                <div class="text-danger mt-1" id="passwordMismatch" style="display: none;">Las contraseñas no coinciden.</div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="avatarPerfil" class="form-label">Cambiar Avatar (opcional)</label>
-                                <input type="file" class="form-control" id="avatarPerfil" name="avatar" accept="image/*">
-                                <small id="avatarActual" class="form-text text-muted"></small>
-                                <img id="previewAvatar" src="#" alt="Vista previa del avatar" style="max-width: 100px; max-height: 100px; display: none; margin-top: 10px;">
-                            </div>
-                        </div>
-                        <div class="modal-footer-combinado d-flex justify-content-end gap-2 p-3">
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        </div>
-                    </form>
-                </div>
-                
-            </div>
+            <!-- Modal Perfil -->
+<div class="modal fade" id="modalPerfilProfesor" tabindex="-1" aria-labelledby="modalPerfilLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formPerfilProfesor" method="POST" action="/lider/actualizar_perfil" enctype="multipart/form-data">
+      <input type="hidden" id="profesorId" name="id">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalPerfilLabel">Editar Perfil</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <img id="imagenPreview" src="{{ url_for('static', filename=imagen or 'avatars/perfil_predeterminado.png') }}"
+               alt="Foto de perfil"
+               class="rounded-circle"
+               style="width: 100px; height: 100px; object-fit: cover;">
+        </div>
+
+        <div class="mb-3">
+          <label for="nombrePerfil" class="form-label">Nombre</label>
+          <input type="text" class="form-control" id="nombrePerfil" name="nombre" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="emailPerfil" class="form-label">Correo</label>
+          <input type="email" class="form-control" id="emailPerfil" name="email" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="nueva_contrasena" class="form-label">Nueva Contraseña</label>
+          <input type="password" class="form-control" id="nueva_contrasena" name="nueva_contrasena">
+        </div>
+
+        <div class="mb-3">
+          <label for="confirmar_contrasena" class="form-label">Confirmar Contraseña</label>
+          <input type="password" class="form-control" id="confirmar_contrasena" name="confirmar_contrasena">
+        </div>
+
+        <div class="mb-3">
+          <label for="nueva_imagen" class="form-label">Foto de Perfil</label>
+          <input type="file" class="form-control" id="nueva_imagen" name="nueva_imagen" accept="image/*"
+                 onchange="mostrarVistaPrevia(event)">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
             <!-- Modal Crear Proyecto -->
 <div class="modal fade" id="modalProyecto" tabindex="-1" aria-labelledby="modalProyectoLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -381,46 +389,7 @@
 </div>
 
             
-            <!-- Sección: Usuarios por Grupo -->
-            <div class="main-container mt-4" id="usuariosPorGrupoContainer" style="display: none;">
-                <h2>Usuarios por Grupo</h2>
-                {% if usuarios_por_grupo %}
-                    {% for grupo, usuarios in usuarios_por_grupo.items() %}
-                        <div class="card mb-3">
-                            <div class="card-header bg-success text-white">
-                                {{ grupo }}
-                            </div>
-                            <ul class="list-group list-group-flush">
-                                {% for usuario in usuarios %}
-                                    <li class="list-group-item">
-                                        <strong>{{ usuario['nombre'] }}</strong> ({{ usuario['nombre_usuario'] }}) - {{ usuario['correo'] }}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="alert alert-info">No hay usuarios registrados.</div>
-                {% endif %}
-            </div>
-
-            <script>
-            // Mostrar sección de usuarios por grupo al hacer clic en el botón de Grupos
-            document.addEventListener('DOMContentLoaded', function() {
-                const gruposBtn = document.querySelectorAll('.curso-link-sidebar');
-                const usuariosPorGrupoContainer = document.getElementById('usuariosPorGrupoContainer');
-                const tasksContainer = document.getElementById('tasksContainer');
-                const projectsContainer = document.getElementById('projectsContainer');
-                gruposBtn.forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        if (usuariosPorGrupoContainer) usuariosPorGrupoContainer.style.display = 'block';
-                        if (tasksContainer) tasksContainer.style.display = 'none';
-                        if (projectsContainer) projectsContainer.style.display = 'none';
-                    });
-                });
-            });
-            </script>
+            
 
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             <script src="/static/js/dashboard.js"></script>

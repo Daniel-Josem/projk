@@ -11,11 +11,10 @@
   <link rel="stylesheet" href="/static/css/calendario.css">
   <link rel="stylesheet" href="/static/css/tarea-card.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tarea-modal.css') }}">
-  <link rel="stylesheet" href="/static/css/tareas-flotante.css">
   <link rel="icon" href="{{ url_for('static', filename='avatars/barra_lateral.png')}}">
 
 </head>
-<body>  
+<body>
   <div class="d-flex" id="wrapper">
     <!-- Sidebar visual admin/líder, pero con lógica trabajador -->
     <nav id="sidebar" class="sidebar bg-success text-white vh-100 p-3">
@@ -70,7 +69,7 @@
             <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="dropdownNotificaciones" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
               <i class="bi bi-bell me-1"></i>
             </button>
-           <ul class="dropdown-menu dropdown-menu-end p-2 shadow-sm" aria-labelledby="dropdownNotificaciones" id="notificaciones-lista" style="min-width: 320px; max-height: 350px; overflow-y: auto; box-shadow: 0 8px 32px rgba(25,135,84,0.18); border-radius: 1.1rem;">
+            <ul class="dropdown-menu dropdown-menu-end p-2 shadow-sm" aria-labelledby="dropdownNotificaciones" style="min-width: 250px;">
               <li class="text-muted small">🔔 No hay notificaciones nuevas</li>
             </ul>
           </div>
@@ -125,12 +124,12 @@
         </div>
       </main>
 
-      <!-- Inyectar tareas reales para JS (para tareas flotantes) -->
+      <!-- Inyectar tareas reales para JS -->
       <script>
-        window.tareasUsuario = {{ tareas|tojson }};
+//         window.tareasUsuario = {{ tareas|tojson }};
       </script>
       <!-- Sección: Mis Tareas -->
-      <main class="p-4" id="seccion-mis-tareas" style="display: none;">
+      <main class="p-4" id="seccion-mis-tareas" style="display: none !important;">
         <div class="container">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="text-success fw-bold">Mis Tareas</h2>
@@ -234,20 +233,19 @@
                           <i class="bi bi-clipboard-check me-2 text-success tarea-icon"></i>
                           <span class="fw-semibold">Estado:</span> <span class="ms-1">{{ tarea['estado']|capitalize }}</span>
                         </li>
-                        {# Mostrar solo el archivo más reciente si hay varios #}
-                        {% if tarea['archivos'] and tarea['archivos']|length > 0 %}
+                        {% if tarea['ruta_archivo'] %}
                         <li class="list-group-item px-0 py-1 border-0 d-flex align-items-center">
                           <i class="bi bi-paperclip me-2 text-info tarea-icon"></i>
                           <span class="fw-semibold">Archivo:</span>
-                          <a href="{{ tarea['archivos'][-1]['url'] }}" class="ms-2 link-success fw-semibold text-truncate tarea-archivo-link" target="_blank" style="max-width: 140px; display: inline-block; vertical-align: middle;">
-                            <i class="bi bi-file-earmark-arrow-down me-1"></i>{{ tarea['archivos'][-1]['nombre']|truncate(18, True, '...') }}
+                          <a href="/static/archivos_tareas/{{ tarea['ruta_archivo'] }}" class="ms-2 link-success fw-semibold text-truncate tarea-archivo-link" target="_blank" style="max-width: 140px; display: inline-block; vertical-align: middle;">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i>{{ tarea['ruta_archivo']|truncate(18, True, '...') }}
                           </a>
                         </li>
                         {% endif %}
                       </ul>
                       <div class="d-flex justify-content-between align-items-center mt-auto">
-                        {% if tarea['archivos'] and tarea['archivos']|length > 0 %}
-                          <a href="{{ tarea['archivos'][-1]['url'] }}" class="btn btn-archivo-tarea" target="_blank"><i class="bi bi-paperclip me-1"></i> Archivo</a>
+                        {% if tarea['ruta_archivo'] %}
+                          <a href="/static/archivos_tareas/{{ tarea['ruta_archivo'] }}" class="btn btn-archivo-tarea" target="_blank"><i class="bi bi-paperclip me-1"></i> Archivo</a>
                         {% endif %}
                         <span class="badge estado-badge estado-badge-{{ tarea['estado']|replace(' ', '-')|lower }}">
                           <i class="bi {% if tarea['estado']=='completado' %}bi-check-circle-fill{% elif tarea['estado']=='en progreso' %}bi-hourglass-split{% elif tarea['estado']=='atrasada' %}bi-exclamation-circle-fill{% else %}bi-circle{% endif %} me-1"></i>
@@ -284,6 +282,16 @@
               box-shadow: 0 4px 12px rgba(25,135,84,0.13);
             }
           </style>
+          <!-- Tabla de tareas -->
+          <div class="card shadow-sm">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tabla-mis-tareas">
+                  <tbody>
+                    <!-- Las tareas se cargarán dinámicamente aquí desde el Javascript -->
+                  </tbody>
+                </table>
+              </div>
               <!-- Paginación -->
               <nav aria-label="Paginación de tareas" class="p-3">
                 <ul class="pagination justify-content-center mb-0" id="tareas-paginacion">
@@ -390,35 +398,8 @@
                   </tr>
                 </thead>
                 <tbody id="tabla-planificacion">
-                  {% if proyectos %}
-                    {% for proyecto in proyectos %}
-                      <tr>
-                        <td>{{ proyecto['nombre'] }}</td>
-                        <td>{{ proyecto['descripcion'] }}</td>
-                        <td>{{ proyecto['fecha_inicio'] }}</td>
-                        <td>{{ proyecto['fecha_fin'] }}</td>
-                        <td>{{ proyecto['estado'] if proyecto['estado'] else 'Sin estado' }}</td>
-                      </tr>
-                    {% endfor %}
-                  {% else %}
-                    <tr>
-                      <td colspan="5" class="text-center">No tienes proyectos asignados.</td>
-                    </tr>
-                  {% endif %}
+                  <!-- Aquí se insertan los proyectos por JS -->
                 </tbody>
-                <!-- Ajuste visual para la tabla de proyectos -->
-                <style>
-                  #tabla-planificacion tr td {
-                    vertical-align: middle;
-                    font-size: 1rem;
-                  }
-                  #tabla-planificacion tr td:first-child {
-                    font-weight: bold;
-                  }
-                  #tabla-planificacion tr td:last-child {
-                    text-align: center;
-                  }
-                </style>
               </table>
             </div>
           </div>
@@ -760,70 +741,6 @@
       <script src="/static/js/calendar.js"></script>
       <script src="/static/js/mostrar-calendario.js"></script>
       <script src="/static/js/tarea-modal.js"></script>
-      <script src="/static/js/tareas-flotante.js"></script>
-      <script>
-        // Mostrar la sección correspondiente al hacer clic en el menú lateral
-        document.addEventListener('DOMContentLoaded', function() {
-          const secciones = [
-            'seccion-inicio',
-            'seccion-mis-tareas',
-            'contenido-planificacion',
-            'contenido-calendario',
-            'seccion-estadisticas',
-            'seccion-ayuda'
-          ];
-          function mostrarSeccion(id) {
-            secciones.forEach(sec => {
-              const el = document.getElementById(sec);
-              if (el) el.style.display = (sec === id) ? 'block' : 'none';
-            });
-          }
-          document.getElementById('btn-inicio')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            mostrarSeccion('seccion-inicio');
-          });
-          document.getElementById('btn-mis-tareas')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            mostrarSeccion('seccion-mis-tareas');
-          });
-          document.getElementById('btn-planificacion')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            mostrarSeccion('contenido-planificacion');
-          });
-          document.getElementById('btn-calendario')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            mostrarSeccion('contenido-calendario');
-          });
-          document.getElementById('btn-estadisticas')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            mostrarSeccion('seccion-estadisticas');
-          });
-          document.getElementById('btn-ayuda')?.addEventListener('click', function(e) {
-            e.preventDefault();
-            mostrarSeccion('seccion-ayuda');
-          });
-        });
-      </script>
-      <script>
-// Notificaciones trabajador
-async function cargarNotificaciones() {
-  try {
-    const resp = await fetch('/api/notificaciones');
-    const data = await resp.json();
-    const lista = document.getElementById('notificaciones-lista');
-    if (data.ok && data.notificaciones.length > 0) {
-      lista.innerHTML = data.notificaciones.map(n =>
-        `<li class="dropdown-item small">${n.mensaje} <br><span class="text-muted">${n.fecha || ''}</span></li>`
-      ).join('');
-    } else {
-      lista.innerHTML = '<li class="text-muted small">🔔 No hay notificaciones nuevas</li>';
-    }
-  } catch (e) {
-    document.getElementById('notificaciones-lista').innerHTML = '<li class="text-danger small">Error al cargar notificaciones</li>';
-  }
-}
-document.getElementById('dropdownNotificaciones')?.addEventListener('click', cargarNotificaciones);
-</script>
     </div>
   </div>
 </body>

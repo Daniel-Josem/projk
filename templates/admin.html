@@ -55,20 +55,14 @@
           </a>
         </li>
         <li>
-          <a
-            href="#materiasSubmenu"
-            data-bs-toggle="collapse"
-            class="nav-link text-white dropdown-toggle"
-          >
-            <i class="bi bi-journal-bookmark"></i><span>Proyectos</span>
+          <a href="#" class="nav-link text-white" id="seguimientoLink">
+            <i class="bi bi-check2-square"></i><span>Seguimiento</span>
           </a>
-          <ul class="collapse list-unstyled ps-3" id="materiasSubmenu">
-            <li><a href="#" class="nav-link text-white materia-link">Torre Prado</a></li>
-            <li><a href="#" class="nav-link text-white materia-link">Torre Milton</a></li>
-            <li><a href="#" class="nav-link text-white materia-link">Fiscalia Medellin</a></li>
-            <li><a href="#" class="nav-link text-white materia-link">San velente</a></li>
-            <li><a href="#" class="nav-link text-white materia-link">Anay beauty</a></li>
-          </ul>
+        </li>
+        <li>
+          <a href="#" class="nav-link text-white" id="crear-proyecto-link">
+          <i class="bi bi-journal-bookmark"></i><span>Crear Proyectos</span>
+          </a>
         </li>
       </ul>
     </nav>
@@ -111,13 +105,7 @@
           <h5 class="fw-bold mb-1">Proyectos</h5>
           <div class="display-6 fw-bold" id="proyectos-count">0</div>
         </div>
-      </div>
-        <div class="col-12">
-          <h4 class="mb-3">Avance de Proyectos</h4>
-        </div>
-        <div class="col-12">
-          <div class="alert alert-warning text-center">No hay proyectos registrados.</div>
-        </div>
+      </div> 
       </div>
       <div id="mainContent"></div>
     </div>
@@ -215,14 +203,21 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body text-center">
-          <img id="previewImagenPerfil" src="{{ url_for('static', filename='avatars/perfil.jpeg') }}"
+          <!-- Imagen de perfil actual -->
+          <img id="previewImagenPerfil" src="/static/avatars/perfil.jpeg?t={{ timestamp }}"
                alt="Imagen de perfil"
                class="rounded-circle mb-3"
                style="width: 100px; height: 100px; object-fit: cover;">
+
+          <!-- Input para subir nueva imagen -->
           <input type="file" name="imagen" id="imagenPerfilInput" accept="image/*" class="form-control mb-3" />
 
-          <input type="text" name="nombre" class="form-control mb-3" placeholder="Nombre completo" required />
-          <textarea name="descripcion" class="form-control mb-3" rows="3" placeholder="Sobre mí..."></textarea>
+          <!-- Campo para nombre (rellenado si ya hay un nombre disponible) -->
+          <input type="text" name="nombre" class="form-control mb-3" placeholder="Nombre completo"
+                 value="{{ usuario.nombre if usuario else '' }}" />
+
+          <!-- Campo para descripcion personal -->
+          <textarea name="descripcion" class="form-control mb-3" rows="3" placeholder="Sobre mí...">{{ usuario.descripcion if usuario else '' }}</textarea>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-success">Guardar cambios</button>

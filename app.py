@@ -54,22 +54,10 @@ def crear_tabla_usuario():
         cursor.execute('ALTER TABLE Usuario ADD COLUMN direccion TEXT')
         print("Columna 'direccion' agregada a la tabla Usuario.")
 
-    # Crear tabla lider
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS lider (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      usuario_id INTEGER UNIQUE NOT NULL,
-      experiencia TEXT,
-      materia TEXT,
-      lider TEXT,
-      telefono TEXT,
-      direccion TEXT,
-      FOREIGN KEY(usuario_id) REFERENCES Usuario(id) ON DELETE CASCADE
-    );''')
-
+  
 # Crear tabla proyectos
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS proyectos (
+    CREATE TABLE IF NOT EXISTS Proyecto (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE,
         descripcion TEXT,
@@ -79,21 +67,6 @@ def crear_tabla_usuario():
         fecha_fin TEXT
     );
     ''')
-    # Insertar proyectos por defecto si no existen
-    proyectos_defecto = [
-        ('Torre Prado', 'Construcción de edificio residencial Torre Prado.', 'Grupo1', '2025-07-01'),
-        ('Torre Milton', 'Infraestructura residencial de alto nivel.', 'Grupo2', '2025-07-01'),
-        ('Fiscalía Medellin', 'Ampliación sede judicial Medellín.', 'Grupo3', '2025-07-01'),
-        ('San Velente', 'Complejo habitacional San Velente.', 'Grupo4', '2025-07-01'),
-        ('Anay Beauty', 'Diseño y obra para la sede Anay Beauty.', 'Grupo5', '2025-07-01')
-    ]
-
-    for nombre, descripcion, grupo, fecha_inicio in proyectos_defecto:
-        cursor.execute('''
-            INSERT OR IGNORE INTO proyectos (nombre, descripcion, grupo, fecha_inicio)
-            VALUES (?, ?, ?, ?)
-        ''', (nombre, descripcion, grupo, fecha_inicio))
-
 
     # Crear tabla tareas
     cursor.execute('''
@@ -151,54 +124,6 @@ def crear_tabla_usuario():
 
 # Ejecutar la función al iniciar la app
 crear_tabla_usuario()
-
-# Insertar tareas de demostracion si no existen
-#Añadido por majo
-def insertar_tareas_demo():
-    conn = sqlite3.connect('gestor_de_tareas.db')
-    cursor = conn.cursor()
-
-    # Verifica si ya existen tareas para evitar duplicados
-    cursor.execute("SELECT COUNT(*) FROM tareas")
-    total = cursor.fetchone()[0]
-
-    if total == 0:
-        cursor.execute('''
-            INSERT INTO tareas (
-                titulo, descripcion, id_proyecto, id_usuario_asignado, fecha_vencimiento, fecha_registro
-            ) VALUES (?, ?, ?, ?, ?, DATE('now'))
-        ''', ('Revisión de planos', 'Revisar diseño estructural', 1, 2, '2025-07-10'))
-
-        conn.commit()
-        print("Tarea de prueba insertada correctamente.")
-    else:
-        print("Ya existen tareas, no se insertaron duplicados.")
-
-    conn.close()
-
-insertar_tareas_demo()
-def crear_usuario_asignado_demo():
-    conn = sqlite3.connect('gestor_de_tareas.db')
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA foreign_keys = ON")
-
-    # Verificar si ya existe un usuario con ID 2
-    cursor.execute("SELECT id FROM Usuario WHERE id = 2")
-    usuario = cursor.fetchone()
-
-    if not usuario:
-        # Crear un usuario de prueba con ID 2
-        cursor.execute('''
-            INSERT INTO Usuario (id, nombre_completo, nombre_usuario, documento, correo, contraseña, rol, estado)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (2, 'Trabajador Demo', 'demo_user', '987654321', 'demo@empresa.com', '1234', 'trabajador', 'activo'))
-        conn.commit()
-        print("✅ Usuario de prueba con ID 2 creado.")
-    else:
-        print("ℹ️ Usuario con ID 2 ya existe.")
-
-    conn.close()
-crear_usuario_asignado_demo()
 
 # Rutas principales
 @app.route('/')

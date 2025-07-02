@@ -199,3 +199,63 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }, 10000); // 10 segundos
 });
+
+// Abrir modal para crear proyecto
+document.getElementById('btnCrearProyecto').addEventListener('click', () => {
+    document.getElementById('formProyecto').reset();
+    document.getElementById('proyectoId').value = '';
+    document.getElementById('formProyecto').action = '/crear_proyecto';
+    document.getElementById('modalProyectoLabel').textContent = 'Crear Proyecto';
+});
+
+// Script para cargar datos al editar proyecto
+document.querySelectorAll('.btnEditarProyecto').forEach(button => {
+    button.addEventListener('click', () => {
+        document.getElementById('formProyecto').reset();
+
+        document.getElementById('proyectoId').value = button.getAttribute('data-id');
+        document.getElementById('nombreProyecto').value = button.getAttribute('data-nombre');
+        document.getElementById('descripcionProyecto').value = button.getAttribute('data-descripcion');
+        document.getElementById('fechaInicio').value = button.getAttribute('data-fecha-inicio');
+        document.getElementById('fechaFin').value = button.getAttribute('data-fecha-fin');
+
+        document.getElementById('formProyecto').action = '/actualizar_proyecto/' + button.getAttribute('data-id');
+        document.getElementById('modalProyectoLabel').textContent = 'Editar Proyecto';
+    });
+});
+document.addEventListener('DOMContentLoaded', function () {
+  const btn = document.getElementById('btnEditarPerfil');
+  if (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      console.log('Botón de perfil clickeado');
+
+      fetch('/lider/obtener_perfil')
+        .then(res => res.json())
+        .then(data => {
+          if (data.id) {
+            document.getElementById('profesorId').value = data.id;
+            document.getElementById('nombrePerfil').value = data.nombre;
+            document.getElementById('emailPerfil').value = data.email;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalPerfilProfesor'));
+            modal.show();
+          } else {
+            alert('No se pudo cargar el perfil: ' + (data.error || 'Error desconocido'));
+          }
+        })
+        .catch(error => {
+          console.error('Error al conectar con el servidor:', error);
+          alert('Error al conectar con el servidor.');
+        });
+    });
+  } else {
+    console.warn('Botón #btnEditarPerfil no encontrado en el DOM.');
+  }
+});
+
+
+
+
+
+

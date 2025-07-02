@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function () {
   const mainContent = document.getElementById('mainContent');
   const statsEl = document.getElementById('stats');
@@ -6,10 +5,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const profesoresLink = document.getElementById('profesores-link');
   const registroLink = document.getElementById('registro-profesor-link');
   const trabajadoresLink = document.getElementById('trabajadores-link');
-  const materiaLinks = document.querySelectorAll('.materia-link');
-  
-
-  document.getElementById('proyectos-count').textContent = '5';
+  const crearProyectoLink = document.getElementById('crear-proyecto-link');
+  const seguimientoLink = document.getElementById('seguimientoLink');
 
   function ocultarSecciones() {
     if (statsEl) statsEl.style.display = 'none';
@@ -19,7 +16,14 @@ document.addEventListener('DOMContentLoaded', function () {
   function cargarEstadisticas() {
     if (statsEl) statsEl.style.display = 'flex';
   }
-
+//Parte del Dashboard
+if (dashboardLink) {
+    dashboardLink.addEventListener('click', e => {
+      e.preventDefault();
+      cargarEstadisticas();
+      mainContent.innerHTML = '';
+    });
+  }
   fetch('/api/trabajadores/count')
     .then(response => response.json())
     .then(data => {
@@ -33,47 +37,127 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('lideres-count').textContent = data.count;
     })
     .catch(error => console.error('Error al obtener líderes:', error));
+  
+    fetch('/api/proyectos/count')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('proyectos-count').textContent = data.count;
+    })
+    .catch(error => console.error('Error al obtener proyectos:', error));
 
-  if (registroLink) {
-    registroLink.addEventListener('click', function (e) {
+
+//Parte de Registro de lideres
+    if (registroLink) {
+  registroLink.addEventListener("click", function (e) {
+    e.preventDefault();
+    ocultarSecciones();
+
+    const formularioHTML = `
+      <div class="container mt-4">
+        <h3 class="mb-4">Registrar Nuevo Líder</h3>
+        <form id="formRegistroLider">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nombre</label><input type="text" class="form-control" name="nombre" required></div>
+            <div class="col-md-6"><label class="form-label">Apellido</label><input type="text" class="form-control" name="apellido" required></div>
+            <div class="col-md-6"><label class="form-label">Usuario</label><input type="text" class="form-control" name="usuario" required></div>
+            <div class="col-md-6"><label class="form-label">Contraseña</label><input type="password" class="form-control" name="contrasena" required></div>
+            <div class="col-md-6"><label class="form-label">Documento</label><input type="text" class="form-control" name="documento" required></div>
+            <div class="col-md-6"><label class="form-label">Proyecto</label>
+              <select class="form-select" name="proyecto" id="selectProyecto" required>
+                <option disabled selected value="">Cargando proyectos...</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label class="form-label">Grupo</label><input type="text" name="grupo" id="grupoInput" class="form-control" placeholder="Grupo del proyecto" readonly required></div>
+            <div class="col-md-6"><label class="form-label">Correo Electrónico</label><input type="email" class="form-control" name="correo" required></div>
+            <div class="col-md-6"><label class="form-label">Teléfono</label><input type="text" class="form-control" name="telefono" required></div>
+            <div class="col-md-6"><label class="form-label">Dirección</label><input type="text" class="form-control" name="direccion" required></div>
+          </div>
+          <div class="mt-4">
+            <button type="submit" class="btn btn-success">Registrar</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    mainContent.innerHTML = formularioHTML;
+
+    // Cargar proyectos activos en el <select>
+    obtenerProyectosActivos().then(proyectos => {
+      const selectProyecto = document.getElementById("selectProyecto");
+      selectProyecto.innerHTML = `<option disabled selected value="">Selecciona un proyecto</option>`;
+      proyectos.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.nombre;
+        option.dataset.grupo = p.grupo;
+        option.textContent = p.nombre;
+        selectProyecto.appendChild(option);
+      });
+    });
+
+    async function obtenerProyectosActivos() {
+      try {
+        const res = await fetch('/api/proyectos');
+        if (!res.ok) throw new Error('Error al obtener proyectos');
+        return await res.json();
+      } catch (err) {
+        console.error('Error cargando proyectos:', err);
+        return [];
+      }
+    }
+
+    // Cambiar automáticamente el grupo según proyecto
+    document.getElementById("selectProyecto").addEventListener("change", function (e) {
+      const grupo = e.target.selectedOptions[0].dataset.grupo;
+      document.getElementById("grupoInput").value = grupo || "";
+    });
+
+    // Manejar el envío del formulario
+    const formRegistro = document.getElementById("formRegistroLider");
+    formRegistro.addEventListener("submit", function (e) {
       e.preventDefault();
-      ocultarSecciones();
 
-      const formularioHTML = `
-        <div class="container mt-4">
-          <h3 class="mb-4">Registrar Nuevo Líder</h3>
-          <form id="formRegistroLider">
-            <div class="row g-3">
-              <div class="col-md-6"><label class="form-label">Nombre</label><input type="text" class="form-control" name="nombre" required></div>
-              <div class="col-md-6"><label class="form-label">Apellido</label><input type="text" class="form-control" name="apellido" required></div>
-              <div class="col-md-6"><label class="form-label">Usuario</label><input type="text" class="form-control" name="usuario" required></div>
-              <div class="col-md-6"><label class="form-label">Contraseña</label><input type="password" class="form-control" name="contrasena" required></div>
-              <div class="col-md-6"><label class="form-label">Documento</label><input type="text" class="form-control" name="documento" required></div>
-              <div class="col-md-6"><label class="form-label">Grupo</label>
-                <select class="form-select" name="grupo" required>
-                  <option disabled selected value="">Selecciona un grupo</option>
-                  <option>Grupo 1</option><option>Grupo 2</option><option>Grupo 3</option><option>Grupo 4</option><option>Grupo 5</option>
-                </select>
-              </div>
-              <div class="col-md-6"><label class="form-label">Proyecto</label>
-                <select class="form-select" name="proyecto" required>
-                  <option disabled selected value="">Selecciona un proyecto</option>
-                  <option>Torre Prado</option><option>Torre Milton</option><option>Fiscalia Medellin</option><option>San velente</option><option>Anay beauty</option>
-                </select>
-              </div>
-              <div class="col-md-6"><label class="form-label">Correo Electrónico</label><input type="email" class="form-control" name="correo" required></div>
-              <div class="col-md-6"><label class="form-label">Teléfono</label><input type="text" class="form-control" name="telefono" required></div>
-              <div class="col-md-6"><label class="form-label">Dirección</label><input type="text" class="form-control" name="direccion" required></div>
-            </div>
-            <div class="mt-4">
-              <button type="submit" class="btn btn-success">Registrar</button>
-            </div>
-          </form>
-        </div>
-      `;
-      mainContent.innerHTML = formularioHTML;
+      const datos = {
+        nombre: formRegistro.nombre.value,
+        apellido: formRegistro.apellido.value,
+        usuario: formRegistro.usuario.value,
+        contrasena: formRegistro.contrasena.value,
+        documento: formRegistro.documento.value,
+        proyecto: formRegistro.proyecto.value,
+        grupo: formRegistro.grupo.value,
+        correo: formRegistro.correo.value,
+        telefono: formRegistro.telefono.value,
+        direccion: formRegistro.direccion.value
+      };
 
-      const formRegistro = document.getElementById('formRegistroLider');
+      fetch('/api/lideres/crear', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(datos)
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.message) {
+            alert("✅ " + data.message);
+            formRegistro.reset();
+            document.getElementById("grupoInput").value = "";
+            document.getElementById("selectProyecto").selectedIndex = 0;
+            document.getElementById("profesores-link").click();
+          } else if (data.error) {
+            alert("❌ " + data.error);
+          }
+        })
+        .catch((error) => {
+          console.error("Error en el registro:", error);
+          alert("❌ Error en el servidor.");
+        });
+    });
+  });
+}
+
+//Parte de lideres
+const formRegistro = document.getElementById('formRegistroLider');
       if (formRegistro) {
         formRegistro.addEventListener('submit', function (e) {
           e.preventDefault();
@@ -90,12 +174,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.message) {
               alert("✅ " + response.message);
               formRegistro.reset();
-
-              fetch('/api/lider/count')
-                .then(response => response.json())
-                .then(data => {
-                  document.getElementById('lideres-count').textContent = data.count;
-                });
 
               fetch('/api/lideres')
                 .then(res => res.json())
@@ -153,10 +231,8 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         });
       }
-    });
-  }
 
-  if (profesoresLink) {
+       if (profesoresLink) {
     profesoresLink.addEventListener('click', function (e) {
       e.preventDefault();
       ocultarSecciones();
@@ -291,15 +367,8 @@ function cargarEventosLideres() {
   });
 
 }
-
-  if (dashboardLink) {
-    dashboardLink.addEventListener('click', e => {
-      e.preventDefault();
-      cargarEstadisticas();
-      mainContent.innerHTML = '';
-    });
-  }
-  if (trabajadoresLink) {
+//Parte de Trabajadores
+if (trabajadoresLink) {
   trabajadoresLink.addEventListener('click', function (e) {
     e.preventDefault();
     ocultarSecciones();
@@ -418,13 +487,15 @@ function cargarEventosTrabajadores() {
   });
 
 }
+//Parte del perfil del administrador
 document.getElementById('imagenPerfilInput').addEventListener('change', function (e) {
   const file = e.target.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = function (event) {
       document.getElementById('previewImagenPerfil').src = event.target.result;
-      document.querySelector('.user-pill img').src = event.target.result; // Actualiza imagen en el header
+      document.querySelector('.user-pill img').src = '/static/avatars/perfil.jpeg?t=' + new Date().getTime();
+
     };
     reader.readAsDataURL(file);
   }
@@ -466,110 +537,230 @@ document.getElementById('formPerfil').addEventListener('submit', function (e) {
     });
 });
 
-if (materiaLinks.length > 0) {
-  materiaLinks.forEach(link => {
-    link.addEventListener('click', function (e) {
-      e.preventDefault();
-      ocultarSecciones();
-
-      const nombreProyecto = this.textContent.trim();
-
-      fetch(`/api/proyecto/${encodeURIComponent(nombreProyecto)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            mainContent.innerHTML = `<div class="alert alert-danger">Proyecto no encontrado.</div>`;
-            return;
-          }
-
-          const avance = typeof data.avance === 'number' && !isNaN(data.avance) ? data.avance : 0;
-          const pendientes = 100 - avance;
-
-
-          let trabajadoresHTML = '';
-          if (data.trabajadores && data.trabajadores.length > 0) {
-            trabajadoresHTML = data.trabajadores.map(t => `<li class="list-group-item">${t}</li>`).join('');
-          } else {
-            trabajadoresHTML = '<li class="list-group-item">No hay trabajadores con tareas pendientes.</li>';
-          }
-
-          mainContent.innerHTML = `
-            <h3 class="mb-4">Informe del Proyecto: <strong>${nombreProyecto}</strong></h3>
-
-            <p><strong>Líder del Proyecto:</strong> ${data.lider}</p>
-
-            <div class="progress mb-4" style="height: 30px;">
-              <div class="progress-bar bg-success" role="progressbar" style="width: ${avance}%">
-                ${avance}% Completadas
-              </div>
-              <div class="progress-bar bg-warning text-dark" role="progressbar" style="width: ${pendientes}%">
-                ${pendientes}% Pendientes
-              </div>
-            </div>
-
-            <h5>Trabajadores con tareas pendientes</h5>
-            <ul class="list-group mb-4">${trabajadoresHTML}</ul>
-
-            <button class="btn btn-outline-danger" id="btnGenerarPDF">
-              <i class="bi bi-file-earmark-pdf"></i> Generar Informe PDF
-            </button>
-          `;
-
-          const btnPDF = document.getElementById('btnGenerarPDF');
-          if (btnPDF) {
-            btnPDF.addEventListener('click', () => {
-              fetch(`/api/proyecto/${encodeURIComponent(nombreProyecto)}/pdf`)
-                .then(resp => resp.blob())
-                .then(blob => {
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `informe_${nombreProyecto.replace(/\s+/g, '_')}.pdf`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  window.URL.revokeObjectURL(url);
-                });
-            });
-          }
-        })
-        .catch(error => {
-          console.error("Error al cargar el proyecto:", error);
-          mainContent.innerHTML = `<div class="alert alert-danger text-center">No se pudo cargar el proyecto seleccionado.</div>`;
-        });
-    });
+//Parte de Crear proyectos
+if (crearProyectoLink) {
+  crearProyectoLink.addEventListener('click', function (e) {
+    e.preventDefault();
+    mostrarVistaCrearProyectos();
   });
 }
 
-function cargarAvanceProyecto(nombreProyecto) {
-  fetch(`/api/proyecto/${encodeURIComponent(nombreProyecto)}`)
+function mostrarVistaCrearProyectos() {
+  ocultarSecciones();
+  const html = `
+    <h3>Gestión de Proyectos</h3>
+    <form id="formCrearProyecto" class="mb-4">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <input type="text" class="form-control" id="nombreProyecto" placeholder="Nombre del proyecto" required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <input type="text" class="form-control" id="grupoProyecto" placeholder="Grupo" required>
+        </div>
+        <div class="col-12 mb-3">
+          <textarea class="form-control" id="descripcionProyecto" placeholder="Descripción" required></textarea>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label>Fecha de inicio</label>
+          <input type="date" class="form-control" id="fechaInicio" required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label>Fecha de finalización</label>
+          <input type="date" class="form-control" id="fechaFin" required>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-success">Crear Proyecto</button>
+        </div>
+      </div>
+    </form>
+
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Inicio</th>
+          <th>Finalización</th>
+          <th>Grupo</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaProyectosBody"></tbody>
+    </table>
+  `;
+
+  document.getElementById('mainContent').innerHTML = html;
+
+  document.getElementById('formCrearProyecto').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const data = {
+      nombre: document.getElementById('nombreProyecto').value,
+      descripcion: document.getElementById('descripcionProyecto').value,
+      fecha_inicio: document.getElementById('fechaInicio').value,
+      fecha_fin: document.getElementById('fechaFin').value,
+      grupo: document.getElementById('grupoProyecto').value
+    };
+
+    fetch('/api/proyecto/crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.message) {
+          alert("✅ " + data.message);
+          document.getElementById('formCrearProyecto').reset();
+          cargarProyectos();
+        } else if (data.error) {
+          alert("❌ " + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error en la creación del proyecto:', error);
+        alert("❌ Error inesperado al crear el proyecto");
+      });
+  });
+
+  cargarProyectos();
+}
+
+function cargarProyectos() {
+  fetch('/api/proyectos')
     .then(res => res.json())
     .then(data => {
-      if (data.error) {
-        console.error(data.error);
-        return;
-      }
+      const tabla = document.getElementById('tablaProyectosBody');
+      tabla.innerHTML = '';
+      data.forEach(proy => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td>${proy.nombre}</td>
+          <td>${proy.descripcion}</td>
+          <td>${proy.fecha_inicio}</td>
+          <td>${proy.fecha_fin}</td>
+          <td>${proy.grupo}</td>
+          <td>${proy.estado}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="editarProyecto(${proy.id})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="inactivarProyecto(${proy.id})">Inactivar</button>
+          </td>
+        `;
+        tabla.appendChild(fila);
+      });
+    });
+}
 
-      const avance = data.avance;
-      const barra = document.querySelector(`#barra-${nombreProyecto.replace(/\s+/g, '-')}`);
-
-      if (barra) {
-        barra.style.width = `${avance}%`;
-        barra.innerText = `${avance}%`;
+function inactivarProyecto(id) {
+  fetch(`/api/proyecto/inactivar/${id}`, { method: 'POST' })
+    .then(res => res.json())
+    .then(resp => {
+      if (resp.message) {
+        alert(resp.message);
+        cargarProyectos();
       }
     });
 }
-const proyectoHTML = `
-  <div class="card">
-    <h3>${proyecto.nombre}</h3>
-    <div class="progress">
-      <div class="progress-bar bg-success" 
-           id="barra-${proyecto.nombre.replace(/\s+/g, '-')}" 
-           style="width: 0%">0%</div>
-    </div>
-    <button onclick="cargarAvanceProyecto('${proyecto.nombre}')">Actualizar Avance</button>
-  </div>
-`;
+
+function editarProyecto(id) {
+  fetch(`/api/proyecto/${id}`)
+    .then(res => res.json())
+    .then(proy => {
+      document.getElementById('nombreProyecto').value = proy.nombre;
+      document.getElementById('descripcionProyecto').value = proy.descripcion;
+      document.getElementById('fechaInicio').value = proy.fecha_inicio;
+      document.getElementById('fechaFin').value = proy.fecha_fin;
+      document.getElementById('grupoProyecto').value = proy.grupo;
+
+      const btn = document.querySelector('#formCrearProyecto button[type="submit"]');
+      btn.textContent = "Actualizar Proyecto";
+      btn.classList.remove("btn-success");
+      btn.classList.add("btn-warning");
+
+      document.getElementById('formCrearProyecto').onsubmit = function (e) {
+        e.preventDefault();
+        const data = {
+          nombre: document.getElementById('nombreProyecto').value,
+          descripcion: document.getElementById('descripcionProyecto').value,
+          fecha_inicio: document.getElementById('fechaInicio').value,
+          fecha_fin: document.getElementById('fechaFin').value,
+          grupo: document.getElementById('grupoProyecto').value
+        };
+
+        fetch(`/api/proyecto/editar/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(resp => resp.json())
+        .then(data => {
+          if (data.message) {
+            alert("✅ " + data.message);
+            document.getElementById('formCrearProyecto').reset();
+            btn.textContent = "Crear Proyecto";
+            btn.classList.remove("btn-warning");
+            btn.classList.add("btn-success");
+            cargarProyectos();
+          } else {
+            alert("❌ " + data.error);
+          }
+        });
+      };
+    });
+}
+window.editarProyecto = editarProyecto;
+window.inactivarProyecto = inactivarProyecto;
 
 
+//Parte de seguimiento del proyecto
+if (seguimientoLink) {
+  seguimientoLink.addEventListener('click', async e => {
+    e.preventDefault();
+    ocultarSecciones();
+
+    const proyectos = await obtenerProyectos(); // ← Obtiene los proyectos desde la API
+
+    let listaProyectos = '';
+    if (proyectos.length > 0) {
+      listaProyectos = proyectos.map(p => `<li>${p.nombre}</li>`).join('');
+    } else {
+      listaProyectos = '<li>No hay proyectos registrados.</li>';
+    }
+
+    const html = `
+      <div>
+        <h3>Seguimiento de Proyectos</h3>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSeguimiento">
+          Ver proyectos
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="modalSeguimiento" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Proyectos Registrados</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body">
+                <ul>
+                  ${listaProyectos}
+                </ul>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    mainContent.innerHTML = html;
+
+    // Mostrar el modal automáticamente después de cargarlo
+    const modal = new bootstrap.Modal(document.getElementById('modalSeguimiento'));
+    modal.show();
+  });
+}
 });

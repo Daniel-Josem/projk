@@ -119,7 +119,7 @@ def login():
         elif not check_password_hash(usuario['contraseña'], contrasena):
             flash('Contraseña incorrecta.')
         else:
-            session['usuario'] = usuario['id']  # Guardar el id, no el nombre de usuario
+            session['usuario'] = nombre_usuario
             session['grupo'] = usuario['grupo'] # ✅ Guardar el grupo en la sesión
             rol = usuario['rol']
 

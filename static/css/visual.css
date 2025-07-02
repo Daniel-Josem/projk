@@ -604,34 +604,3 @@ body {
 /* Script para agregar la clase 'clicked' al hacer click en los botones de la sidebar */
 /* Esto debe ir en el JS principal, pero aquí solo se deja el CSS necesario */
 /*Genero admin*/
-
-/* Estilos para mejorar la visualización de las notificaciones en el menú del líder */
-.noti-item {
-  border-radius: 0.5rem;
-  margin-bottom: 2px;
-  transition: background 0.2s;
-  cursor: default;
-}
-.noti-noleida {
-  background: #e9f9ee;
-  border-left: 4px solid #198754;
-}
-.noti-leida {
-  background: #f8f9fa;
-  color: #888;
-}
-.noti-mensaje {
-  display: inline-block;
-  max-width: 170px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle;
-}
-.noti-fecha {
-  font-size: 0.85em;
-  color: #888;
-  margin-left: 0.5em;
-}
-.noti-item:hover {
-  background: #d0f5e2;
-}

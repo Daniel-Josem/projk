@@ -77,7 +77,7 @@ function renderTarjetas(tareas) {
               </li>
             </ul>
             <div class="d-flex justify-content-between align-items-center mt-auto">
-              ${(tarea.archivos && tarea.archivos.length > 0) ? `<a href="${tarea.archivos[tarea.archivos.length-1].url}" class="btn btn-archivo-tarea" target="_blank"><i class="bi bi-paperclip me-1"></i> Archivo</a>` : ''}
+              ${tarea.ruta_archivo ? `<a href="/static/archivos_tareas/${tarea.ruta_archivo}" class="btn btn-archivo-tarea" target="_blank"><i class="bi bi-paperclip me-1"></i> Archivo</a>` : ''}
               <span class="badge estado-badge estado-badge-${estadoNorm.replace(' ', '-')}">
                 <i class="bi ${estadoNorm==='completado' ? 'bi-check-circle-fill' : estadoNorm==='en progreso' ? 'bi-hourglass-split' : estadoNorm==='atrasada' ? 'bi-exclamation-circle-fill' : 'bi-circle'} me-1"></i>
                 ${tarea.estado.charAt(0).toUpperCase() + tarea.estado.slice(1)}
@@ -173,9 +173,8 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
       // Archivo para descargar
       const archivoDiv = document.getElementById('detalle-tarea-archivo');
-      if (tarea.archivos && tarea.archivos.length > 0) {
-        const archivo = tarea.archivos[tarea.archivos.length-1];
-        archivoDiv.innerHTML = `<a href="${archivo.url}" class="btn btn-outline-success" download><i class="bi bi-download"></i> Descargar archivo</a>`;
+      if (tarea.ruta_archivo) {
+        archivoDiv.innerHTML = `<a href="/static/archivos_tareas/${tarea.ruta_archivo}" class="btn btn-outline-success" download><i class="bi bi-download"></i> Descargar archivo</a>`;
       } else {
         archivoDiv.innerHTML = `<span class='text-muted'>No hay archivo adjunto.</span>`;
       }
@@ -190,67 +189,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Subida de archivo (real)
+  // Subida de archivo (simulada)
   const formArchivo = document.getElementById('formSubirArchivoTarea');
   if (formArchivo) {
-    formArchivo.onsubmit = async function(e) {
+    formArchivo.onsubmit = function(e) {
       e.preventDefault();
       const tareaId = this.getAttribute('data-tarea-id');
       const input = document.getElementById('inputArchivoTarea');
-      const mensajeDiv = document.getElementById('mensajeArchivoTarea');
       if (!input.files.length) {
-        mensajeDiv.innerHTML = '<span class="text-danger">Selecciona un archivo.</span>';
+        document.getElementById('mensajeArchivoTarea').innerHTML = '<span class="text-danger">Selecciona un archivo.</span>';
         return;
       }
-      const formData = new FormData();
-      formData.append('archivo', input.files[0]);
-      try {
-        const resp = await fetch(`/api/tarea/subir-archivo/${tareaId}`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await resp.json();
-        if (data.ok) {
-          mensajeDiv.innerHTML = '<span class="text-success">Archivo subido correctamente.</span>';
-          input.value = '';
-          // Refrescar solo el detalle de la tarea y la tarjeta, sin recargar la página
-          // 1. Obtener la tarea actualizada
-          const tareaResp = await fetch(`/api/tarea/${tareaId}`);
-          const tareaActualizada = await tareaResp.json();
-          // 2. Actualizar el modal de detalle
-          const cont = document.getElementById('detalle-tarea-contenido');
-          cont.innerHTML = `
-            <h4 class="fw-bold mb-2">${tareaActualizada.titulo}</h4>
-            <p class="mb-2 text-muted">${tareaActualizada.descripcion}</p>
-            <ul class="list-group list-group-flush mb-3">
-              <li class="list-group-item px-0 py-1 border-0"><b>Prioridad:</b> ${tareaActualizada.prioridad}</li>
-              <li class="list-group-item px-0 py-1 border-0"><b>Vence:</b> ${tareaActualizada.fecha_vencimiento}</li>
-              <li class="list-group-item px-0 py-1 border-0"><b>Estado:</b> ${tareaActualizada.estado}</li>
-            </ul>
-          `;
-          // 3. Actualizar el botón de descarga
-          const archivoDiv = document.getElementById('detalle-tarea-archivo');
-          if (tareaActualizada.archivos && tareaActualizada.archivos.length > 0) {
-            const archivo = tareaActualizada.archivos[tareaActualizada.archivos.length-1];
-            archivoDiv.innerHTML = `<a href="${archivo.url}" class="btn btn-outline-success" download><i class="bi bi-download"></i> Descargar archivo</a>`;
-          } else {
-            archivoDiv.innerHTML = `<span class='text-muted'>No hay archivo adjunto.</span>`;
-          }
-          // 4. Actualizar la tarjeta de la tarea en la lista (si está visible)
-          if (window.tareasUsuario) {
-            const idx = window.tareasUsuario.findIndex(t => String(t.id) === String(tareaId));
-            if (idx !== -1) {
-              window.tareasUsuario[idx] = tareaActualizada;
-              if (typeof renderTarjetas === 'function') renderTarjetas(window.tareasUsuario);
-              if (typeof actualizarResumen === 'function') actualizarResumen(window.tareasUsuario);
-            }
-          }
-        } else {
-          mensajeDiv.innerHTML = '<span class="text-danger">' + (data.msg || 'Error al subir archivo') + '</span>';
-        }
-      } catch (err) {
-        mensajeDiv.innerHTML = '<span class="text-danger">Error de red al subir archivo.</span>';
-      }
+      // Simulación de subida
+      document.getElementById('mensajeArchivoTarea').innerHTML = '<span class="text-success">Archivo subido correctamente (simulado).</span>';
+      input.value = '';
     };
   }
 
